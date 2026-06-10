@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "dgSpecHash": "VteF1cdjBsA=",
+  "success": true,
+  "projectFilePath": "/Users/josephmonakedi/dev/Dotnet-Elevator-Joseph/ElevatorSimulator.Infrastructure/ElevatorSimulator.Infrastructure.csproj",
+  "expectedPackageFiles": [
+    "/Users/josephmonakedi/.nuget/packages/serilog/4.3.1/serilog.4.3.1.nupkg.sha512",
+    "/Users/josephmonakedi/.nuget/packages/serilog.sinks.console/6.1.1/serilog.sinks.console.6.1.1.nupkg.sha512",
+    "/Users/josephmonakedi/.nuget/packages/serilog.sinks.file/7.0.0/serilog.sinks.file.7.0.0.nupkg.sha512"
+  ],
+  "logs": []
+}
