@@ -12,7 +12,7 @@ public class Building
 
     public Building(int floorCount, int elevatorCount, int elevatorCapacity, int tickDurationMs = 500, int basementFloors = 0)
     {
-        FloorCount = floorCount;
+        FloorCount = floorCount + basementFloors;
         ElevatorCount = elevatorCount;
         ElevatorCapacity = elevatorCapacity;
         TickDurationMs = tickDurationMs;

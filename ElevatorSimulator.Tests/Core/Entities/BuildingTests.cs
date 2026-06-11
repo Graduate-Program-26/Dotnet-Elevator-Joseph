@@ -8,9 +8,9 @@ public class BuildingTests
     [Fact]
     public void Building_Constructor_ShouldCreateCorrectNumberOfFloorsAndElevators()
     {
-        var building = new Building(floorCount: 10, elevatorCount: 3, elevatorCapacity: 5);
+        var building = new Building(floorCount: 10, elevatorCount: 3, elevatorCapacity: 5, basementFloors: 2);
 
-        building.FloorCount.Should().Be(10);
+        building.FloorCount.Should().Be(12);
         building.ElevatorCount.Should().Be(3);
         building.ElevatorCapacity.Should().Be(5);
         building.TickDurationMs.Should().Be(500);

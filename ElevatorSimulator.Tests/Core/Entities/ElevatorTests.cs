@@ -13,7 +13,7 @@ public class ElevatorTests
         
         elevator.Name.Should().Be("Test-Elevator");
         elevator.Capacity.Should().Be(10);
-        elevator.CurrentFloor.Should().Be(1);
+        elevator.CurrentFloor.Should().Be(0);
         elevator.Direction.Should().Be(Direction.Idle);
         elevator.State.Should().Be(ElevatorState.Idle);
         elevator.Occupancy.Should().Be(0);
