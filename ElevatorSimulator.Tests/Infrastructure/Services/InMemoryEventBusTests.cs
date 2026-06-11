@@ -43,4 +43,20 @@ public class InMemoryEventBusTests
         
         act.Should().NotThrow();
     }
+
+    [Fact]
+    public void Unsubscribe_ShouldRemoveHandler()
+    {
+        var eventBus = new InMemoryEventBus();
+        int handleCount = 0;
+        
+        Action<TestEvent> handler = e => handleCount++;
+        
+        eventBus.Subscribe(handler);
+        eventBus.Unsubscribe(handler);
+        
+        eventBus.Publish(new TestEvent());
+        
+        handleCount.Should().Be(0);
+    }
 }

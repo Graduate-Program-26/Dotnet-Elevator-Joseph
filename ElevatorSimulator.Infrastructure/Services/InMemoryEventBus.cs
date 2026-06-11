@@ -6,14 +6,20 @@ namespace ElevatorSimulator.Infrastructure.Services;
 
 public class InMemoryEventBus : IEventBus
 {
-    private readonly ConcurrentDictionary<Type, ConcurrentBag<Delegate>> _handlers = new();
+    private readonly ConcurrentDictionary<Type, List<Delegate>> _handlers = new();
 
     public void Publish<TEvent>(TEvent @event) where TEvent : DomainEvent
     {
         var eventType = typeof(TEvent);
         if (_handlers.TryGetValue(eventType, out var delegates))
         {
-            foreach (var handler in delegates)
+            List<Delegate> snapshot;
+            lock (delegates)
+            {
+                snapshot = delegates.ToList();
+            }
+
+            foreach (var handler in snapshot)
             {
                 if (handler is Action<TEvent> typedHandler)
                 {
@@ -26,7 +32,22 @@ public class InMemoryEventBus : IEventBus
     public void Subscribe<TEvent>(Action<TEvent> handler) where TEvent : DomainEvent
     {
         var eventType = typeof(TEvent);
-        var bag = _handlers.GetOrAdd(eventType, _ => new ConcurrentBag<Delegate>());
-        bag.Add(handler);
+        var delegates = _handlers.GetOrAdd(eventType, _ => new List<Delegate>());
+        lock (delegates)
+        {
+            delegates.Add(handler);
+        }
+    }
+
+    public void Unsubscribe<TEvent>(Action<TEvent> handler) where TEvent : DomainEvent
+    {
+        var eventType = typeof(TEvent);
+        if (_handlers.TryGetValue(eventType, out var delegates))
+        {
+            lock (delegates)
+            {
+                delegates.Remove(handler);
+            }
+        }
     }
 }
