@@ -10,12 +10,11 @@ public class BuildingTests
     {
         var building = new Building(floorCount: 10, elevatorCount: 3, elevatorCapacity: 5, basementFloors: 2);
 
-        building.FloorCount.Should().Be(12);
-        building.ElevatorCount.Should().Be(3);
-        building.ElevatorCapacity.Should().Be(5);
+        building.GetFloorCount().Should().Be(12);
+        building.GetElevatorCount().Should().Be(3);
+        building.Elevators.Select(e => e.Capacity).Should().BeEquivalentTo(Enumerable.Repeat(5, 3));
         building.TickDurationMs.Should().Be(500);
-
-        building.Floors.Should().HaveCount(10);
+        building.Floors.Should().HaveCount(12);
         building.Elevators.Should().HaveCount(3);
     }
 
