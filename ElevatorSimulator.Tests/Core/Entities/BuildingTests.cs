@@ -26,4 +26,19 @@ public class BuildingTests
         building.Elevators[0].Name.Should().Be("Elevator-1");
         building.Elevators[1].Name.Should().Be("Elevator-2");
     }
+
+    [Fact]
+    public void GetActiveHallCalls_ShouldReturnAllActiveCallsAcrossFloors()
+    {
+        var building = new Building(floorCount: 5, elevatorCount: 2, elevatorCapacity: 5);
+        
+        building.Floors[0].AddCall(new HallCall(0, ElevatorSimulator.Core.Enums.Direction.Up));
+        building.Floors[2].AddCall(new HallCall(2, ElevatorSimulator.Core.Enums.Direction.Down));
+
+        var activeCalls = building.GetActiveHallCalls().ToList();
+
+        activeCalls.Should().HaveCount(2);
+        activeCalls.Should().Contain(c => c.Floor == 0 && c.Direction == ElevatorSimulator.Core.Enums.Direction.Up);
+        activeCalls.Should().Contain(c => c.Floor == 2 && c.Direction == ElevatorSimulator.Core.Enums.Direction.Down);
+    }
 }

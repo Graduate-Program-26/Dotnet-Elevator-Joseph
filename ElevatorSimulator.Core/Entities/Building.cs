@@ -26,4 +26,5 @@ public class Building
     }
     public int GetFloorCount () => Floors.Count();
     public int GetElevatorCount () => Elevators.Count();
+    public IEnumerable<HallCall> GetActiveHallCalls() => Floors.SelectMany(f => f.GetActiveCalls());
 }
