@@ -4,7 +4,7 @@ using ElevatorSimulator.Infrastructure.Services;
 using ElevatorSimulator.Simulation;
 using ElevatorSimulator.Simulation.Strategies;
 
-var building = new Building(floorCount: 10, elevatorCount: 2, elevatorCapacity: 8, tickDurationMs: 500);
+var building = new Building(floorCount: 4, elevatorCount: 3, elevatorCapacity: 5, tickDurationMs: 500, basementFloors:1);
 
 var eventBus = new InMemoryEventBus();
 var clock = new SimulationClock(TimeSpan.FromMilliseconds(building.TickDurationMs));

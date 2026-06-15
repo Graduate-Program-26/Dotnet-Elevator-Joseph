@@ -18,7 +18,6 @@ public class BuildingShaftRenderer
         {
             Header = new PanelHeader("Building Shaft View"),
             Border = BoxBorder.Rounded,
-            Expand = true
         };
     }
 
