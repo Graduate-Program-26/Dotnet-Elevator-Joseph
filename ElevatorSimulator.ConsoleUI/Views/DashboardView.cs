@@ -16,8 +16,7 @@ public class DashboardView
 
         AnsiConsole.Live(new Markup("Initializing..."))
             .AutoClear(false)
-            .Overflow(VerticalOverflow.Crop)
-            .Cropping(VerticalOverflowCropping.Bottom)
+            .Overflow(VerticalOverflow.Visible)
             .Start(ctx =>
             {
                 while (true)

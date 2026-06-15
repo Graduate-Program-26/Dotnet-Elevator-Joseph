@@ -16,7 +16,7 @@ public class StatusBarRenderer
         grid.AddRow(
             $"[bold cyan]Tick:[/] {clock.TotalTicks}",
             $"[bold cyan]Speed:[/] {clock.TickDuration.TotalMilliseconds}ms",
-            $"[bold cyan]State:[/] {(engine.CurrentState.ToString() == "Playing" ? "[green]Playing[/]" : $"[yellow]{engine.CurrentState}[/]")}",
+            $"[bold cyan]State:[/] {(engine.CurrentState.ToString() == "Playing" ? "[green]Playing[/]" : $"[yellow]{engine.CurrentState}[/]")}"
         );
 
         return new Panel(grid)
