@@ -1,0 +1,136 @@
+@namespace ElevatorSimulator.ConsoleUI.Components
+
+@using RazorConsole.Components
+@using ElevatorSimulator.ConsoleUI.ViewModels
+@using Spectre.Console
+@using System.Text
+
+<Markup Content="@RenderRow()" />
+
+@code {
+    private const int FloorLabelWidth = 6;
+    private const int ShaftInnerWidth = 13;
+    private const int FloorHeight = 6;
+
+    [Parameter, EditorRequired] public FloorViewModel Floor { get; set; } = null!;
+    [Parameter, EditorRequired] public IReadOnlyList<ElevatorViewModel> Elevators { get; set; } = [];
+
+    private string RenderRow()
+    {
+        var sb = new StringBuilder();
+
+        for (int line = 0; line < FloorHeight; line++)
+        {
+            // ── Left label column ──────────────────────────────────────────
+            if (line == 0)
+            {
+                var label = BuildFloorLabel(Floor);
+                sb.Append(CenterText(label, FloorLabelWidth));
+            }
+            else
+            {
+                sb.Append(new string(' ', FloorLabelWidth));
+            }
+
+            // ── Shaft columns ──────────────────────────────────────────────
+            foreach (var elevator in Elevators)
+            {
+                sb.Append('|');
+                var cabFloor = (int)Math.Round(elevator.Position, MidpointRounding.AwayFromZero);
+                var isOnFloor = cabFloor == Floor.Level;
+
+                sb.Append(isOnFloor
+                    ? RenderCabLine(elevator, line)
+                    : new string(' ', ShaftInnerWidth));
+            }
+
+            sb.Append('|');
+            sb.AppendLine();
+        }
+
+        return sb.ToString().TrimEnd('\n', '\r');
+    }
+
+    private static string RenderCabLine(ElevatorViewModel e, int line)
+    {
+        const int boxInner = ShaftInnerWidth - 2;
+
+        var dirGlyph  = DirectionGlyph(e.Direction);
+        var doorGlyph = DoorGlyph(e.DoorState);
+        var bottomDoorGlyph = DoorBottomGlyph(e.DoorState);
+
+        return line switch
+        {
+            0 => $"+{new string('-', boxInner)}+",                    // top border
+            1 => $"|{CenterText($" {e.Label} {dirGlyph} {e.Occupancy}/{e.Capacity} ", boxInner)}|", // info
+            2 => $"+{new string('-', boxInner)}+",                    // mid border
+            3 => $"|{CenterText($"{doorGlyph}", boxInner)}|",           // door
+            4 => $"|{CenterText($"{doorGlyph}", boxInner)}|", 
+            5 => $"|{CenterBottomText($"{bottomDoorGlyph}", boxInner)}|",            
+            _ => new string(' ', ShaftInnerWidth),
+        };
+    }
+
+    // ─── Label helpers ────────────────────────────────────────────────────────
+
+    private static string BuildFloorLabel(FloorViewModel floor)
+    {
+        var up   = floor.HallCall.HasUpCall   ? "↑" : " ";
+        var down = floor.HallCall.HasDownCall ? "↓" : " ";
+
+        var upCount   = floor.HallCall.UpPassengerCount   > 0 ? floor.HallCall.UpPassengerCount.ToString()   : string.Empty;
+        var downCount = floor.HallCall.DownPassengerCount > 0 ? floor.HallCall.DownPassengerCount.ToString() : string.Empty;
+
+        var upIndicator   = floor.HallCall.HasUpCall   ? $"{up}{upCount}"   : " ";
+        var downIndicator = floor.HallCall.HasDownCall ? $"{down}{downCount}" : " ";
+
+        return $"{floor.Level,3} {upIndicator}{downIndicator}";
+    }
+
+    // ─── Glyph helpers ────────────────────────────────────────────────────────
+
+    private static string DirectionGlyph(DirectionViewModel dir) => dir switch
+    {
+        DirectionViewModel.Up   => "↑",
+        DirectionViewModel.Down => "↓",
+        _                       => "-",
+    };
+
+    private static string DoorGlyph(DoorState state) => state switch
+    {
+        DoorState.Closed  => "||",
+        DoorState.Opening => "|   |",
+        DoorState.Open    => "|       |",
+        DoorState.Closing => "|  |",
+        _                 => "||",
+    };
+    private static string DoorBottomGlyph(DoorState state) => state switch
+    {
+        DoorState.Closed  => "||",
+        DoorState.Opening => "|___|",
+        DoorState.Open    => "|_______|",
+        DoorState.Closing => "|___|",
+        _                 => "||",
+    };
+
+    public static string CenterText(string text, int width)
+    {
+        if (string.IsNullOrEmpty(text)) return new string(' ', width);
+
+        int spaces = width - text.Length;
+        if (spaces <= 0) return text;
+
+        int leftSide = spaces / 2 + text.Length;
+        return text.PadLeft(leftSide).PadRight(width);
+    }
+    public static string CenterBottomText(string text, int width)
+    {
+        if (string.IsNullOrEmpty(text)) return new string('_', width);
+
+        int spaces = width - text.Length;
+        if (spaces <= 0) return text;
+
+        int leftSide = spaces / 2 + text.Length;
+        return text.PadLeft(leftSide, '_').PadRight(width, '_');
+    }
+}
