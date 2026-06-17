@@ -10,6 +10,7 @@ public class Elevator
     public double Position { get; set; } = 0.0;
     public Direction Direction { get; set; } = Direction.Idle;
     public ElevatorState State { get; set; } = ElevatorState.Idle;
+    public ElevatorDoorState DoorState { get; set; } = ElevatorDoorState.Closed;
     public int Capacity { get; init; }
     
     public int Occupancy => Passengers.Count;

@@ -1,0 +1,119 @@
+@namespace ElevatorSimulator.ConsoleUI.Components
+
+@using System.Timers
+@using RazorConsole.Components
+@using ElevatorSimulator.ConsoleUI.ViewModels
+@using ElevatorSimulator.Core.Entities
+@using ElevatorSimulator.Core.Interfaces
+@using Spectre.Console
+@implements IDisposable
+
+@* ── Status Bar -- *@
+<Panel Title="Elevator Simulator" Border="BoxBorder.Rounded">
+    <Columns>
+        <Markup Content="Tick:" Foreground="@Color.Cyan1" Decoration="@Decoration.Bold" />
+        <Markup Content="@((_clock?.TotalTicks ?? 0).ToString())" />
+        
+        <Markup Content="Speed:" Foreground="@Color.Cyan1" Decoration="@Decoration.Bold" />
+        <Markup Content="@($"{_clock?.TickDuration.TotalMilliseconds ?? 0}ms")" />
+        
+        <Markup Content="State:" Foreground="@Color.Cyan1" Decoration="@Decoration.Bold" />
+        @if (Engine?.CurrentState.ToString() == "Playing")
+        {
+            <Markup Content="Playing" Foreground="@Color.Green" />
+        }
+        else
+        {
+            <Markup Content="@(Engine?.CurrentState.ToString() ?? "Unknown")" Foreground="@Color.Yellow" />
+        }
+        
+        <Markup Content="Elevators:" Foreground="@Color.Cyan1" Decoration="@Decoration.Bold" />
+        <Markup Content="@((_vm?.Elevators.Count ?? 0).ToString())" />
+        
+        <Markup Content="Floors:" Foreground="@Color.Cyan1" Decoration="@Decoration.Bold" />
+        <Markup Content="@((_vm?.Floors.Count ?? 0).ToString())" />
+    </Columns>
+</Panel>
+
+@* ── Building Shaft View ── *@
+<Panel Title="Building Shaft View" Border="BoxBorder.Rounded">
+    <Rows>
+        @if (_vm is not null)
+        {
+            @* Separator above the top floor *@
+            <Markup Content="@Separator()" />
+
+            @foreach (var floor in _vm.Floors)
+            {
+                @* One floor strip across all shafts *@
+                <FloorRowComponent Floor="@floor" Elevators="@_vm.Elevators" />
+
+                @* Horizontal separator between floors *@
+                <Markup Content="@Separator()" />
+            }
+        }
+        else
+        {
+            <Markup Content="[grey]Initialising simulation...[/]" />
+        }
+    </Rows>
+</Panel>
+
+@code {
+
+    [Inject] private Building Building { get; set; } = null!;
+
+    [Inject] private ISimulationEngine Engine { get; set; } = null!;
+
+    [Inject] private ISimulationClock Clock { get; set; } = null!;
+
+    private BuildingViewModel? _vm;
+    private ISimulationClock? _clock;
+    private Timer? _refreshTimer;
+
+    protected override void OnInitialized()
+    {
+        _clock = Clock;
+
+        // Initial render
+        RefreshViewModel();
+
+        // Start periodic refresh loop
+        _refreshTimer = new Timer(interval: 100);
+        _refreshTimer.Elapsed += (_, _) =>
+        {
+            RefreshViewModel();
+            InvokeAsync(StateHasChanged);
+        };
+        _refreshTimer.AutoReset = true;
+        _refreshTimer.Start();
+    }
+
+    public void Dispose()
+    {
+        _refreshTimer?.Stop();
+        _refreshTimer?.Dispose();
+    }
+
+    private void RefreshViewModel() =>
+        _vm = BuildingViewModelMapper.Map(Building);
+
+    private string Separator()
+    {
+        if (_vm is null) return string.Empty;
+
+        const int floorLabelWidth = 6;
+        const int shaftInnerWidth = 13;
+
+        var sb = new System.Text.StringBuilder();
+        sb.Append('+');
+        sb.Append(new string('-', floorLabelWidth-1));
+        foreach (var _ in _vm.Elevators)
+        {
+            sb.Append('+');
+            sb.Append(new string('-', shaftInnerWidth));
+        }
+        sb.Append('+');
+        return sb.ToString();
+    }
+}
