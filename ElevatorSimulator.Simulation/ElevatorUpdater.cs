@@ -76,10 +76,10 @@ public class ElevatorUpdater
             if (elevator.TransitionTicks >= Elevator.TicksPerFloor)
             {
                 // Find next floor based on direction
-                var nextFloorQuery = elevator.State == ElevatorState.MovingUp 
+                var nextFloorQuery = elevator.State == ElevatorState.MovingUp
                     ? _building.Floors.Where(f => f.Level > elevator.CurrentFloor).OrderBy(f => f.Level)
                     : _building.Floors.Where(f => f.Level < elevator.CurrentFloor).OrderByDescending(f => f.Level);
-                
+
                 var nextFloor = nextFloorQuery.FirstOrDefault();
 
                 if (nextFloor != null)
@@ -92,36 +92,36 @@ public class ElevatorUpdater
                 if (elevator.CurrentFloor <= minFloor && elevator.State == ElevatorState.MovingDown)
                 {
                     elevator.CurrentFloor = minFloor;
-                    elevator.State        = ElevatorState.Idle;
-                    elevator.Direction    = Direction.Idle;
+                    elevator.State = ElevatorState.Idle;
+                    elevator.Direction = Direction.Idle;
                     elevator.DownStops.RemoveWhere(s => s < minFloor);
                 }
                 else if (elevator.CurrentFloor >= maxFloor && elevator.State == ElevatorState.MovingUp)
                 {
                     elevator.CurrentFloor = maxFloor;
-                    elevator.State        = ElevatorState.Idle;
-                    elevator.Direction    = Direction.Idle;
+                    elevator.State = ElevatorState.Idle;
+                    elevator.Direction = Direction.Idle;
                     elevator.UpStops.RemoveWhere(s => s > maxFloor);
                 }
 
-                bool hasUpStop   = elevator.UpStops.Contains(elevator.CurrentFloor);
+                bool hasUpStop = elevator.UpStops.Contains(elevator.CurrentFloor);
                 bool hasDownStop = elevator.DownStops.Contains(elevator.CurrentFloor);
 
                 if (hasUpStop || hasDownStop)
                 {
                     // Arrived at a stop
                     Direction stopDirection = elevator.Direction;
-                    if (stopDirection == Direction.Up   && !hasUpStop   && hasDownStop) stopDirection = Direction.Down;
-                    if (stopDirection == Direction.Down && !hasDownStop && hasUpStop)   stopDirection = Direction.Up;
+                    if (stopDirection == Direction.Up && !hasUpStop && hasDownStop) stopDirection = Direction.Down;
+                    if (stopDirection == Direction.Down && !hasDownStop && hasUpStop) stopDirection = Direction.Up;
 
                     elevator.RemoveStop(elevator.CurrentFloor, stopDirection);
                     elevator.Direction = stopDirection;
-                    elevator.State     = ElevatorState.Idle;
+                    elevator.State = ElevatorState.Idle;
                     elevator.DoorState = ElevatorDoorState.Opening;
                     _eventBus.Publish(new ElevatorArrivedEvent(elevator, elevator.CurrentFloor));
 
                     // Become idle when no further stops remain in the travel direction
-                    if (elevator.Direction == Direction.Up   && !elevator.UpStops.Any(s => s >= elevator.CurrentFloor))
+                    if (elevator.Direction == Direction.Up && !elevator.UpStops.Any(s => s >= elevator.CurrentFloor))
                         elevator.Direction = Direction.Idle;
                     if (elevator.Direction == Direction.Down && !elevator.DownStops.Any(s => s <= elevator.CurrentFloor))
                         elevator.Direction = Direction.Idle;
@@ -188,7 +188,7 @@ public class ElevatorUpdater
         Direction boardingDirection = elevator.Direction;
         if (boardingDirection == Direction.Idle)
         {
-            if (floor.WaitingUpPassengers.Any())   boardingDirection = Direction.Up;
+            if (floor.WaitingUpPassengers.Any()) boardingDirection = Direction.Up;
             else if (floor.WaitingDownPassengers.Any()) boardingDirection = Direction.Down;
         }
 
@@ -222,7 +222,7 @@ public class ElevatorUpdater
             var hallCall = boardingDirection == Direction.Up ? floor.UpCall : floor.DownCall;
             if (hallCall != null)
             {
-                hallCall.Status             = HallCallStatus.Created;
+                hallCall.Status = HallCallStatus.Created;
                 hallCall.AssignedElevatorId = null;
             }
 

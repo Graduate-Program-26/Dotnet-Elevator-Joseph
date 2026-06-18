@@ -31,7 +31,7 @@ public class BuildingTests
     public void GetActiveHallCalls_ShouldReturnAllActiveCallsAcrossFloors()
     {
         var building = new Building(floorCount: 5, elevatorCount: 2, elevatorCapacity: 5);
-        
+
         building.Floors[0].AddCall(new HallCall(0, ElevatorSimulator.Core.Enums.Direction.Up));
         building.Floors[2].AddCall(new HallCall(2, ElevatorSimulator.Core.Enums.Direction.Down));
 

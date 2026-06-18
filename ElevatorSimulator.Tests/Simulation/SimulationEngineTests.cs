@@ -16,12 +16,12 @@ public class SimulationEngineTests
     /// </summary>
     private static (SimulationEngine engine, InMemoryEventBus eventBus, SimulationClock clock) CreateEngine()
     {
-        var clock      = new SimulationClock(TimeSpan.FromMilliseconds(500));
-        var eventBus   = new InMemoryEventBus();
-        var building   = new Building(floorCount: 5, elevatorCount: 1, elevatorCapacity: 8);
-        var strategy   = new NearestElevatorStrategy();
+        var clock = new SimulationClock(TimeSpan.FromMilliseconds(500));
+        var eventBus = new InMemoryEventBus();
+        var building = new Building(floorCount: 5, elevatorCount: 1, elevatorCapacity: 8);
+        var strategy = new NearestElevatorStrategy();
         var dispatcher = new Dispatcher(strategy, eventBus);
-        var engine     = new SimulationEngine(building, clock, eventBus, dispatcher);
+        var engine = new SimulationEngine(building, clock, eventBus, dispatcher);
         return (engine, eventBus, clock);
     }
 

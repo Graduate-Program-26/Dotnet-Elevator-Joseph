@@ -50,7 +50,7 @@ public class RandomPassengerGenerator
         }
 
         var passenger = new Passenger(originFloor.Level, destFloor.Level, direction);
-        
+
         originFloor.AddPassenger(passenger);
         _eventBus.Publish(new PassengerCreatedEvent(passenger));
 

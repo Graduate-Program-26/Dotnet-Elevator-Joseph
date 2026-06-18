@@ -23,11 +23,11 @@ public class NearestElevatorStrategyTests
     {
         var strategy = new NearestElevatorStrategy();
         var hallCall = new HallCall(5, Direction.Up);
-        var elevator = new Elevator("E1", 10) 
-        { 
-            State = ElevatorState.MovingUp, 
-            Direction = Direction.Up, 
-            CurrentFloor = 2 
+        var elevator = new Elevator("E1", 10)
+        {
+            State = ElevatorState.MovingUp,
+            Direction = Direction.Up,
+            CurrentFloor = 2
         };
 
         var assigned = strategy.AssignElevator(new[] { elevator }, hallCall);
@@ -40,11 +40,11 @@ public class NearestElevatorStrategyTests
     {
         var strategy = new NearestElevatorStrategy();
         var hallCall = new HallCall(5, Direction.Up);
-        var elevator = new Elevator("E1", 10) 
-        { 
-            State = ElevatorState.MovingUp, 
-            Direction = Direction.Up, 
-            CurrentFloor = 7 
+        var elevator = new Elevator("E1", 10)
+        {
+            State = ElevatorState.MovingUp,
+            Direction = Direction.Up,
+            CurrentFloor = 7
         };
 
         var assigned = strategy.AssignElevator(new[] { elevator }, hallCall);
@@ -57,11 +57,11 @@ public class NearestElevatorStrategyTests
     {
         var strategy = new NearestElevatorStrategy();
         var hallCall = new HallCall(5, Direction.Up);
-        var elevator = new Elevator("E1", 1) 
-        { 
-            State = ElevatorState.MovingUp, 
-            Direction = Direction.Up, 
-            CurrentFloor = 2 
+        var elevator = new Elevator("E1", 1)
+        {
+            State = ElevatorState.MovingUp,
+            Direction = Direction.Up,
+            CurrentFloor = 2
         };
         elevator.Passengers.Add(new Passenger(2, 8)); // Fill elevator
 
@@ -75,8 +75,8 @@ public class NearestElevatorStrategyTests
     {
         var strategy = new NearestElevatorStrategy();
         var hallCall = new HallCall(5, Direction.Up);
-        
-        var e1 = new Elevator("E1", 10) { State = ElevatorState.Idle, CurrentFloor= 0 };
+
+        var e1 = new Elevator("E1", 10) { State = ElevatorState.Idle, CurrentFloor = 0 };
         var e2 = new Elevator("E2", 10) { State = ElevatorState.Idle, CurrentFloor = 4 };
         var e3 = new Elevator("E3", 10) { State = ElevatorState.MovingUp, Direction = Direction.Up, CurrentFloor = 7 };
 

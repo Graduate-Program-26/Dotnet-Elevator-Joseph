@@ -13,12 +13,12 @@ public class Elevator
     public ElevatorState State { get; set; } = ElevatorState.Idle;
     public ElevatorDoorState DoorState { get; set; } = ElevatorDoorState.Closed;
     public int Capacity { get; init; }
-    
+
     public int Occupancy => Passengers.Count;
     public bool IsFull => Occupancy >= Capacity;
 
     public List<Passenger> Passengers { get; } = new();
-    
+
     public HashSet<int> UpStops { get; } = new();
     public HashSet<int> DownStops { get; } = new();
 
