@@ -245,7 +245,15 @@
 
     private void ToggleAutoGeneration()
     {
-        Engine.IsAutoGenerationEnabled = !Engine.IsAutoGenerationEnabled;
+        if (Engine.IsAutoGenerationEnabled) {
+            Engine.IsAutoGenerationEnabled = false;
+            _generatorMessage = "Automatic passenger generation disabled.";
+            _generatorSuccess = false;
+            } else {
+            Engine.IsAutoGenerationEnabled = true;
+            _generatorMessage = "Automatic passenger generation enabled.";
+            _generatorSuccess = true;
+            }
     }
 
     // ── Manual passenger spawn ────────────────────────────────────────────────
