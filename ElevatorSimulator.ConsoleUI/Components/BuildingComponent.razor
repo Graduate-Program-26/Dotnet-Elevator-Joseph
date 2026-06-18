@@ -90,7 +90,7 @@
         <Panel Title="@($"Elevator {selectedElevator.Label} Details")" Border="BoxBorder.Rounded">
             <Rows>
                 <Columns>
-                    <Markup Content="[cyan1 bold]Current Floor[/]" />
+                    <Markup Content="Current Floor:" Foreground="@Color.Cyan1" />
                     <Markup Content="@($"{selectedElevator.CurrentFloor}")" />
 
                     <Markup Content="Direction:" Foreground="@Color.Cyan1" Decoration="@Decoration.Bold" />
@@ -185,12 +185,12 @@
                     <TextInput Label="Destination Floor" Value="@_destInput" ValueChanged="OnDestChangedAsync" Placeholder="e.g. 3" FocusedBorderColor="@Color.DeepSkyBlue1" BorderPadding="@_inputPadding" Expand="true" />
                     <TextButton Content="[Spawn Passenger]" OnClick="SpawnManualPassenger" BackgroundColor="Color.Grey" FocusedColor="Color.Green" />
                 </Columns>
+            </Rows>
+        </Panel>
                 @if (!string.IsNullOrEmpty(_generatorMessage))
                 {
                     <Markup Content="@_generatorMessage" Foreground="@(_generatorSuccess ? Color.Green : Color.Red)" />
                 }
-            </Rows>
-        </Panel>
     </Rows>
 </Panel>
 
