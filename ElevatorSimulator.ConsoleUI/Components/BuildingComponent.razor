@@ -1,0 +1,384 @@
+@namespace ElevatorSimulator.ConsoleUI.Components
+
+@using System.Timers
+@using RazorConsole.Components
+@using ElevatorSimulator.ConsoleUI.ViewModels
+@using ElevatorSimulator.Core.Entities
+@using ElevatorSimulator.Core.Interfaces
+@using ElevatorSimulator.Core.Enums
+@using Spectre.Console
+@implements IDisposable
+
+
+@* ── Status Bar ── *@
+<Panel Title="Elevator Simulator" Border="BoxBorder.Rounded">
+    <Columns>
+        <Markup Content="Tick:" Foreground="@Color.Cyan1" Decoration="@Decoration.Bold" />
+        <Markup Content="@((_clock?.TotalTicks ?? 0).ToString())" />
+
+        <Markup Content="Speed:" Foreground="@Color.Cyan1" Decoration="@Decoration.Bold" />
+        <Markup Content="@($"{_clock?.TickDuration.TotalMilliseconds ?? 0}ms")" />
+
+        <Markup Content="State:" Foreground="@Color.Cyan1" Decoration="@Decoration.Bold" />
+        @if (Engine?.CurrentState == SimulationState.Playing)
+        {
+            <Markup Content="Playing" Foreground="@Color.Green" />
+        }
+        else
+        {
+            <Markup Content="@(Engine?.CurrentState.ToString() ?? "Unknown")" Foreground="@Color.Yellow" />
+        }
+
+        <Markup Content="Elevators:" Foreground="@Color.Cyan1" Decoration="@Decoration.Bold" />
+        <Markup Content="@((_vm?.Elevators.Count ?? 0).ToString())" />
+
+        <Markup Content="Floors:" Foreground="@Color.Cyan1" Decoration="@Decoration.Bold" />
+        <Markup Content="@((_vm?.Floors.Count ?? 0).ToString())" />
+
+        <Markup Content="Auto-Gen:" Foreground="@Color.Cyan1" Decoration="@Decoration.Bold" />
+        @if (Engine?.IsAutoGenerationEnabled == true)
+        {
+            <Markup Content="ON" Foreground="@Color.Green" />
+        }
+        else
+        {
+            <Markup Content="OFF" Foreground="@Color.Red" />
+        }
+    </Columns>
+</Panel>
+
+@* ── Building Shaft View ── *@
+<Panel Title="Building Shaft View" Border="BoxBorder.Rounded">
+    <Rows>
+        @if (_vm is not null)
+        {
+            @* Separator above the top floor *@
+            <Markup Content="@Separator()" />
+
+            @foreach (var floor in _vm.Floors)
+            {
+                @* One floor strip across all shafts *@
+                <FloorRowComponent Floor="@floor" Elevators="@_vm.Elevators" />
+
+                @* Horizontal separator between floors *@
+                <Markup Content="@Separator()" />
+            }
+
+            @* Buttons to select elevator *@
+            <Columns>
+                <Markup Content="@(new string(' ', @floorLabelWidth))" />
+                @foreach (var elevator in _vm.Elevators)
+                {
+                    var ButtonText = CenterText($"[Select {elevator.Label}]",shaftInnerWidth);
+                    <TextButton OnClick="() => SelectElevator(elevator.Id)" Content="@ButtonText" BackgroundColor="Color.Grey" FocusedColor="Color.Blue" />
+                }
+            </Columns>
+        }
+        else
+        {
+            <Markup Content="[grey]Initialising simulation...[/]" />
+        }
+    </Rows>
+</Panel>
+
+@* ── Elevator Details ── *@
+@if (_selectedElevatorId != null)
+{
+    var selectedElevator = _vm?.Elevators.FirstOrDefault(e => e.Id == _selectedElevatorId);
+    if (selectedElevator != null)
+    {
+        <Panel Title="@($"Elevator {selectedElevator.Label} Details")" Border="BoxBorder.Rounded">
+            <Rows>
+                <Columns>
+                    <Markup Content="Current Floor:" Foreground="@Color.Cyan1" />
+                    <Markup Content="@($"{selectedElevator.CurrentFloor}")" />
+
+                    <Markup Content="Direction:" Foreground="@Color.Cyan1" Decoration="@Decoration.Bold" />
+                    @if (selectedElevator.Direction == DirectionViewModel.Up)
+                    {
+                        <Markup Content="↑ Up" Foreground="@Color.Green" />
+                    }
+                    else if (selectedElevator.Direction == DirectionViewModel.Down)
+                    {
+                        <Markup Content="↓ Down" Foreground="@Color.Yellow" />
+                    }
+                    else
+                    {
+                        <Markup Content="─ Idle" Foreground="@Color.Grey" />
+                    }
+
+                    <Markup Content="Doors:" Foreground="@Color.Cyan1" Decoration="@Decoration.Bold" />
+                    <Markup Content="@selectedElevator.DoorState.ToString()" />
+
+                    <Markup Content="Occupancy:" Foreground="@Color.Cyan1" Decoration="@Decoration.Bold" />
+                    <Markup Content="@($"{selectedElevator.Occupancy}/{selectedElevator.Capacity}")" />
+                </Columns>
+
+                @* Up stops *@
+                <Columns>
+                    <Markup Content="↑ Up Stops:" Foreground="@Color.Green" Decoration="@Decoration.Bold" />
+                    @if (selectedElevator.UpStops.Any())
+                    {
+                        <Markup Content="@(string.Join("  ", selectedElevator.UpStops.Select(s => $"[Floor {s}]")))" Foreground="@Color.Green" />
+                    }
+                    else
+                    {
+                        <Markup Content="none" Foreground="@Color.Grey" />
+                    }
+                </Columns>
+
+                @* Down stops *@
+                <Columns>
+                    <Markup Content="↓ Down Stops:" Foreground="@Color.Yellow" Decoration="@Decoration.Bold" />
+                    @if (selectedElevator.DownStops.Any())
+                    {
+                        <Markup Content="@(string.Join("  ", selectedElevator.DownStops.Select(s => $"[Floor {s}]")))" Foreground="@Color.Yellow" />
+                    }
+                    else
+                    {
+                        <Markup Content="none" Foreground="@Color.Grey" />
+                    }
+                </Columns>
+            </Rows>
+        </Panel>
+    }
+}
+
+@* ── Simulation Controls ── *@
+<Panel Title="Simulation Controls" Border="BoxBorder.Rounded">
+    <Columns>
+        <TextButton Content="[▶ Play/Pause]" OnClick="HandlePlayPause" BackgroundColor="Color.Grey" FocusedColor="Color.Green" />
+        <TextButton Content="[⏭ Step]" OnClick="HandleStep" BackgroundColor="Color.Grey" FocusedColor="Color.Cyan1" />
+        <TextButton Content="[+ Speed Up]" OnClick="HandleSpeedUp" BackgroundColor="Color.Grey" FocusedColor="Color.Blue" />
+        <TextButton Content="[- Speed Down]" OnClick="HandleSpeedDown" BackgroundColor="Color.Grey" FocusedColor="Color.Blue" />
+    </Columns>
+</Panel>
+
+@* ── Passenger Generator ── *@
+<Panel Title="Passenger Generator" Border="BoxBorder.Rounded">
+    <Rows>
+        @* Auto-generation toggle *@
+        <Panel Title="Automatic Generation" Border="BoxBorder.Rounded">
+            <Columns>
+                <Markup Content="Status:" Foreground="@Color.Cyan1" Decoration="@Decoration.Bold" />
+                @if (Engine?.IsAutoGenerationEnabled == true)
+                {
+                    <Markup Content="ENABLED" Foreground="@Color.Green" Decoration="@Decoration.Bold" />
+                    <Markup Content="— passengers spawn automatically each tick." />
+                    <TextButton Content="[Disable Auto-Gen]" OnClick="ToggleAutoGeneration" BackgroundColor="Color.Grey" FocusedColor="Color.Red" />
+                }
+                else
+                {
+                    <Markup Content="DISABLED" Foreground="@Color.Red" Decoration="@Decoration.Bold" />
+                    <Markup Content="— use manual spawning below." />
+                    <TextButton Content="[Enable Auto-Gen]" OnClick="ToggleAutoGeneration" BackgroundColor="Color.Grey" FocusedColor="Color.Green" />
+                }
+            </Columns>
+        </Panel>
+
+        @* Manual spawning *@
+        <Panel Title="Manual Spawn" Border="BoxBorder.Rounded">
+            <Rows>
+                <Markup Content="Enter origin and destination floor numbers (negative = basement, e.g. -1)." />
+                <Columns>
+                    <TextInput Label="Origin Floor" Value="@_originInput" ValueChanged="OnOriginChangedAsync" Placeholder="e.g. 0" FocusedBorderColor="@Color.DeepSkyBlue1" BorderPadding="@_inputPadding" Expand="true" />
+                    <TextInput Label="Destination Floor" Value="@_destInput" ValueChanged="OnDestChangedAsync" Placeholder="e.g. 3" FocusedBorderColor="@Color.DeepSkyBlue1" BorderPadding="@_inputPadding" Expand="true" />
+                    <TextButton Content="[Spawn Passenger]" OnClick="SpawnManualPassenger" BackgroundColor="Color.Grey" FocusedColor="Color.Green" />
+                </Columns>
+            </Rows>
+        </Panel>
+                @if (!string.IsNullOrEmpty(_generatorMessage))
+                {
+                    <Markup Content="@_generatorMessage" Foreground="@(_generatorSuccess ? Color.Green : Color.Red)" />
+                }
+    </Rows>
+</Panel>
+
+@code {
+
+    [Inject] private Building Building { get; set; } = null!;
+    [Inject] private ISimulationEngine Engine { get; set; } = null!;
+    [Inject] private ISimulationClock Clock { get; set; } = null!;
+    [Inject] private IEventBus EventBus { get; set; } = null!;
+
+    private static readonly Padding _inputPadding = new(1, 0, 1, 0);
+
+    private BuildingViewModel? _vm;
+    private ISimulationClock? _clock;
+    private Timer? _refreshTimer;
+    private Guid? _selectedElevatorId;
+
+    private string _originInput = string.Empty;
+    private string _destInput = string.Empty;
+    private string _generatorMessage = string.Empty;
+    private bool   _generatorSuccess = false;
+
+    const int floorLabelWidth = 10;
+    const int shaftInnerWidth = 13;
+
+    // ── Elevator selection ────────────────────────────────────────────────────
+
+    private void SelectElevator(Guid id)
+    {
+        _selectedElevatorId = _selectedElevatorId == id ? null : id; // toggle off if same
+    }
+
+    // ── Simulation controls ───────────────────────────────────────────────────
+
+    private void HandlePlayPause()
+    {
+        if (Engine.CurrentState == SimulationState.Playing)
+            Engine.Pause();
+        else if (Engine.CurrentState == SimulationState.Paused)
+            Engine.Resume();
+        else
+            Engine.Play();
+    }
+
+    private void HandleStep() => Engine.StepOneTick();
+
+    private void HandleSpeedUp() => Engine.IncreaseSpeed();
+
+    private void HandleSpeedDown() => Engine.DecreaseSpeed();
+
+    // ── Auto-generation toggle ────────────────────────────────────────────────
+
+    private void ToggleAutoGeneration()
+    {
+        if (Engine.IsAutoGenerationEnabled) {
+            Engine.IsAutoGenerationEnabled = false;
+            _generatorMessage = "Automatic passenger generation disabled.";
+            _generatorSuccess = false;
+            } else {
+            Engine.IsAutoGenerationEnabled = true;
+            _generatorMessage = "Automatic passenger generation enabled.";
+            _generatorSuccess = true;
+            }
+    }
+
+    // ── Manual passenger spawn ────────────────────────────────────────────────
+
+    private Task OnOriginChangedAsync(string? value)
+    {
+        _originInput = value ?? string.Empty;
+        InvokeAsync(StateHasChanged);
+        return Task.CompletedTask;
+    }
+
+    private Task OnDestChangedAsync(string? value)
+    {
+        _destInput = value ?? string.Empty;
+        InvokeAsync(StateHasChanged);
+        return Task.CompletedTask;
+    }
+
+    private void SpawnManualPassenger()
+    {
+        if (int.TryParse(_originInput, out int origin) && int.TryParse(_destInput, out int dest))
+        {
+            if (origin == dest)
+            {
+                _generatorMessage = "Origin and destination cannot be the same.";
+                _generatorSuccess = false;
+                return;
+            }
+
+            var originFloor = Building.Floors.FirstOrDefault(f => f.Level == origin);
+            var destFloor   = Building.Floors.FirstOrDefault(f => f.Level == dest);
+
+            if (originFloor == null || destFloor == null)
+            {
+                var validLevels = string.Join(", ", Building.Floors.OrderByDescending(f => f.Level).Select(f => f.Level));
+                _generatorMessage = $"Floor not found. Valid floors: {validLevels}";
+                _generatorSuccess = false;
+                return;
+            }
+
+            var direction = dest > origin ? ElevatorSimulator.Core.Enums.Direction.Up : ElevatorSimulator.Core.Enums.Direction.Down;
+
+            if (!originFloor.CanAddPassenger(direction))
+            {
+                _generatorMessage = "Floor queue is full for that direction.";
+                _generatorSuccess = false;
+                return;
+            }
+
+            var passenger = new Passenger(origin, dest, direction);
+            originFloor.AddPassenger(passenger);
+            EventBus.Publish(new ElevatorSimulator.Core.Events.PassengerCreatedEvent(passenger));
+
+            var activeCalls = originFloor.GetActiveCalls();
+            if (!activeCalls.Any(c => c.Direction == direction))
+            {
+                var call = new HallCall(origin, direction);
+                originFloor.AddCall(call);
+                EventBus.Publish(new ElevatorSimulator.Core.Events.HallCallCreatedEvent(call));
+            }
+
+            _generatorMessage = $"✓ Spawned passenger: Floor {origin} → Floor {dest}";
+            _generatorSuccess = true;
+            //_originInput = string.Empty;
+            //_destInput   = string.Empty;
+        }
+        else
+        {
+            _generatorMessage = "Please enter valid integer floor numbers.";
+            _generatorSuccess = false;
+        }
+    }
+
+    // ── Lifecycle ─────────────────────────────────────────────────────────────
+
+    protected override void OnInitialized()
+    {
+        _clock = Clock;
+
+        RefreshViewModel();
+
+        _refreshTimer = new Timer(interval: 100);
+        _refreshTimer.Elapsed += (_, _) =>
+        {
+            RefreshViewModel();
+            InvokeAsync(StateHasChanged);
+        };
+        _refreshTimer.AutoReset = true;
+        _refreshTimer.Start();
+    }
+
+    public void Dispose()
+    {
+        _refreshTimer?.Stop();
+        _refreshTimer?.Dispose();
+    }
+
+    private void RefreshViewModel() =>
+        _vm = BuildingViewModelMapper.Map(Building);
+
+    // ── Layout helpers ────────────────────────────────────────────────────────
+    public static string CenterText(string text, int width)
+    {
+        if (string.IsNullOrEmpty(text)) return new string(' ', width);
+
+        int spaces = width - text.Length;
+        if (spaces <= 0) return text;
+
+        int leftSide = spaces / 2 + text.Length;
+        return text.PadLeft(leftSide).PadRight(width);
+    }
+
+    private string Separator()
+    {
+        if (_vm is null) return string.Empty;
+
+        var sb = new System.Text.StringBuilder();
+        sb.Append('╠');
+        sb.Append(new string('=', floorLabelWidth - 1));
+        foreach (var _ in _vm.Elevators)
+        {
+            sb.Append('╬');
+            sb.Append(new string('=', shaftInnerWidth));
+        }
+        sb.Append('╣');
+        return sb.ToString();
+    }
+}

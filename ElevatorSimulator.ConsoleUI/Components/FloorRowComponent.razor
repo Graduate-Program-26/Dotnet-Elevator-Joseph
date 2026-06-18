@@ -1,0 +1,166 @@
+@namespace ElevatorSimulator.ConsoleUI.Components
+
+@using RazorConsole.Components
+@using ElevatorSimulator.ConsoleUI.ViewModels
+@using Spectre.Console
+@using System.Text
+
+<Markup Content="@RenderRow()" />
+
+@code {
+    private const int FloorLabelWidth = 10;
+    private const int ShaftInnerWidth = 13;
+    private const int FloorHeight = 6;
+
+    [Parameter, EditorRequired] public FloorViewModel Floor { get; set; } = null!;
+    [Parameter, EditorRequired] public IReadOnlyList<ElevatorViewModel> Elevators { get; set; } = [];
+
+    private string RenderRow()
+    {
+        var sb = new StringBuilder();
+
+        for (int line = 0; line < FloorHeight; line++)
+        {
+            // ── Left label column ──────────────────────────────────────────
+            if (line == 0)
+            {
+                var label = BuildFloorLabel(Floor);
+                sb.Append(CenterText(label, FloorLabelWidth));
+            }
+            else if (line == 1)
+            {
+                var indicator = BuildFloorInidcator(Floor);
+                sb.Append(CenterText(indicator, FloorLabelWidth));
+            }
+            else
+            {
+                sb.Append(new string(' ', FloorLabelWidth));
+            }
+
+            // ── Shaft columns ──────────────────────────────────────────────
+            foreach (var elevator in Elevators)
+            {
+                sb.Append('║');
+                var isOnFloor = elevator.CurrentFloor == Floor.Level;
+
+                sb.Append(isOnFloor
+                    ? RenderCabLine(elevator, line)
+                    : new string(' ', ShaftInnerWidth));
+            }
+
+            sb.Append('║');
+            if (line == 1)
+            {
+                sb.Append($"UP Passengers:{Floor.HallCall.UpPassengerCount}");
+            }
+            else if (line == 2)
+            {
+                sb.Append($"DOWN Passengers:{Floor.HallCall.DownPassengerCount}");
+            }
+                sb.AppendLine();
+            }
+
+            return sb.ToString().TrimEnd('\n', '\r');
+        }
+
+    private static string RenderCabLine(ElevatorViewModel e, int line)
+    {
+        const int boxInner = ShaftInnerWidth - 2;
+
+        var dirGlyph  = DirectionGlyph(e.Direction);
+        var topDoorGlyph = DoorTopGlyph(e.DoorState);
+        var doorGlyph = DoorGlyph(e.DoorState);
+        var bottomDoorGlyph = DoorBottomGlyph(e.DoorState);
+
+        return line switch
+        {
+            0 => $"┌{new string('─', boxInner)}┐",                    // top border
+            1 => $"│{CenterText($" {e.Label} {dirGlyph} {e.Occupancy}/{e.Capacity} ", boxInner)}│", // info
+            2 => $"├{CenterBottomText($"{topDoorGlyph}", boxInner)}┤",                    // mid border
+            3 => $"│{CenterText($"{doorGlyph}", boxInner)}│",           // door
+            4 => $"│{CenterText($"{doorGlyph}", boxInner)}│", 
+            5 => $"└{CenterBottomText($"{bottomDoorGlyph}", boxInner)}┘",   //          
+            _ => new string(' ', ShaftInnerWidth),
+        };
+    }
+
+    // ─── Label helpers ────────────────────────────────────────────────────────
+
+    private static string BuildFloorInidcator(FloorViewModel floor)
+    {
+        var up   = floor.HallCall.HasUpCall   ? "↑" : " ";
+        var down = floor.HallCall.HasDownCall ? "↓" : " ";
+
+        var upCount   = floor.HallCall.UpPassengerCount   > 0 ? floor.HallCall.UpPassengerCount.ToString()   : string.Empty;
+        var downCount = floor.HallCall.DownPassengerCount > 0 ? floor.HallCall.DownPassengerCount.ToString() : string.Empty;
+
+        var upIndicator   = floor.HallCall.HasUpCall   ? $"{up}{upCount}"   : " ";
+        var downIndicator = floor.HallCall.HasDownCall ? $"{down}{downCount}" : " ";
+
+        return $"{upIndicator}{downIndicator}";
+    }
+    private static string BuildFloorLabel(FloorViewModel floor)
+    {
+        return $"Floor {floor.Level}";
+    }
+
+    // ─── Glyph helpers ────────────────────────────────────────────────────────
+
+    private static string DirectionGlyph(DirectionViewModel dir) => dir switch
+    {
+        DirectionViewModel.Up   => "↑",
+        DirectionViewModel.Down => "↓",
+        _                       => "─",
+    };
+
+    private static string DoorGlyph(DoorState state) => state switch
+    {
+        DoorState.Closed  => "│",
+        DoorState.Opening => "│     │",
+        DoorState.Open    => "│       │",
+        DoorState.Closing => "│    │",
+        DoorState.PartialyClosed => "│   │",
+        DoorState.PartialyOpened => "│  │",
+        _                   =>"│ │"
+    };
+    private static string DoorBottomGlyph(DoorState state) => state switch
+    {
+        DoorState.Closed  => "┴",
+        DoorState.Opening => "┴─────┴",
+        DoorState.Open    => "┴───────┴",
+        DoorState.Closing => "┴────┴",
+        DoorState.PartialyClosed => "┴───┴",
+        DoorState.PartialyOpened => "┴──┴",
+        _                 => "┴─┴",
+    };
+ private static string DoorTopGlyph(DoorState state) => state switch
+    {
+        DoorState.Closed  => "┬",
+        DoorState.Opening => "┬─────┬",
+        DoorState.Open    => "┬───────┬",
+        DoorState.Closing => "┬────┬",
+        DoorState.PartialyClosed => "┬───┬",
+        DoorState.PartialyOpened => "┬──┬",
+        _                 => "┬─┬",
+    };
+    public static string CenterText(string text, int width)
+    {
+        if (string.IsNullOrEmpty(text)) return new string(' ', width);
+
+        int spaces = width - text.Length;
+        if (spaces <= 0) return text;
+
+        int leftSide = spaces / 2 + text.Length;
+        return text.PadLeft(leftSide).PadRight(width);
+    }
+    public static string CenterBottomText(string text, int width)
+    {
+        if (string.IsNullOrEmpty(text)) return new string('─', width);
+
+        int spaces = width - text.Length;
+        if (spaces <= 0) return text;
+
+        int leftSide = spaces / 2 + text.Length;
+        return text.PadLeft(leftSide, '─').PadRight(width, '─');
+    }
+}

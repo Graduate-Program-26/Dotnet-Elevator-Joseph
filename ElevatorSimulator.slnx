@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="ElevatorSimulator.ConsoleUI/ElevatorSimulator.ConsoleUI.csproj" />
+  <Project Path="ElevatorSimulator.Core/ElevatorSimulator.Core.csproj" />
+  <Project Path="ElevatorSimulator.Infrastructure/ElevatorSimulator.Infrastructure.csproj" />
+  <Project Path="ElevatorSimulator.Simulation/ElevatorSimulator.Simulation.csproj" />
+  <Project Path="ElevatorSimulator.Tests/ElevatorSimulator.Tests.csproj" />
+</Solution>
