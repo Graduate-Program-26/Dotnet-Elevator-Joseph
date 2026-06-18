@@ -1,3 +1,4 @@
+using ElevatorSimulator.Core.Entities;
 using ElevatorSimulator.Core.Enums;
 using ElevatorSimulator.Core.Events;
 using ElevatorSimulator.Core.Interfaces;
@@ -8,21 +9,47 @@ public class SimulationEngine : ISimulationEngine
 {
     private readonly ISimulationClock _clock;
     private readonly IEventBus _eventBus;
+    private readonly Building _building;
+    private readonly Dispatcher _dispatcher;
+    private readonly ElevatorUpdater _elevatorUpdater;
+    private readonly RandomPassengerGenerator _passengerGenerator;
 
     public SimulationState CurrentState { get; private set; } = SimulationState.Stopped;
+    public bool IsAutoGenerationEnabled { get; set; } = true;
 
-    public SimulationEngine(ISimulationClock clock, IEventBus eventBus)
+    public SimulationEngine(Building building, ISimulationClock clock, IEventBus eventBus, Dispatcher dispatcher)
     {
+        _building = building ?? throw new ArgumentNullException(nameof(building));
         _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
-        
+        _dispatcher = dispatcher ?? throw new ArgumentNullException(nameof(dispatcher));
+        _elevatorUpdater = new ElevatorUpdater(_building, _eventBus);
+        _passengerGenerator = new RandomPassengerGenerator(_building, _eventBus);
+
         _clock.Tick += OnClockTick;
     }
 
     private void OnClockTick(object? sender, EventArgs e)
     {
-        // Todo: 1. Dispatcher 2. Elevator Updates 3. Passenger Updates 4. Event Processing 5. Statistics Updates 6. Render UI
+        // 1. Generate Passengers (only when auto-generation is enabled)
+        if (IsAutoGenerationEnabled)
+            _passengerGenerator.Tick();
+
+        // 2. Dispatcher
+        var pendingCalls = _building.GetActiveHallCalls().Where(c => c.Status == HallCallStatus.Created).ToList();
+        if (pendingCalls.Any())
+        {
+            _dispatcher.Dispatch(_building.Elevators, pendingCalls);
+        }
+
+        // 3. Elevator Updates
+        foreach (var elevator in _building.Elevators)
+        {
+            _elevatorUpdater.Update(elevator);
+        }
     }
+
+
 
     public void Play()
     {

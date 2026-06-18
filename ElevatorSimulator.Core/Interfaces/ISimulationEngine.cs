@@ -5,6 +5,7 @@ namespace ElevatorSimulator.Core.Interfaces;
 public interface ISimulationEngine
 {
     SimulationState CurrentState { get; }
+    bool IsAutoGenerationEnabled { get; set; }
 
     void Play();
     void Pause();
