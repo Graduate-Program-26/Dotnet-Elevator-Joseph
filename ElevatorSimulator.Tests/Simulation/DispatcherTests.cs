@@ -17,7 +17,7 @@ public class DispatcherTests
         var eventBus = new InMemoryEventBus();
         var dispatcher = new Dispatcher(strategy, eventBus);
 
-        var elevator = new Elevator("E1", 10) { State = ElevatorState.Idle, Position = 0 };
+        var elevator = new Elevator("E1", 10) { State = ElevatorState.Idle, CurrentFloor = 0 };
         var hallCall = new HallCall(5, Direction.Up);
         
         var eventReceived = false;
@@ -45,7 +45,7 @@ public class DispatcherTests
         var eventBus = new InMemoryEventBus();
         var dispatcher = new Dispatcher(strategy, eventBus);
 
-        var elevator = new Elevator("E1", 10) { State = ElevatorState.Idle, Position = 0 };
+        var elevator = new Elevator("E1", 10) { State = ElevatorState.Idle, CurrentFloor = 0 };
         var hallCall = new HallCall(5, Direction.Up) { Status = HallCallStatus.Assigned };
 
         // Act
