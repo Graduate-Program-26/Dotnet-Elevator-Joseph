@@ -1,4 +1,4 @@
-using ElevatorSimulator.ConsoleUI.Components;
+﻿using ElevatorSimulator.ConsoleUI.Components;
 using ElevatorSimulator.Core.Entities;
 using ElevatorSimulator.Core.Enums;
 using ElevatorSimulator.Core.Interfaces;
@@ -8,50 +8,112 @@ using ElevatorSimulator.Simulation.Strategies;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using RazorConsole.Core;
+using Serilog;
 
-//  Simulation setup 
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Debug()
+    .WriteTo.File("logs/elevator_simulation.txt", rollingInterval: RollingInterval.Day) 
+    .Enrich.FromLogContext()
+    .CreateLogger();
+
+AppDomain.CurrentDomain.UnhandledException += (_, e) =>
+{
+    Log.Fatal(
+        e.ExceptionObject as Exception,
+        "UNHANDLED EXCEPTION");
+};
+TaskScheduler.UnobservedTaskException += (_, e) =>
+{
+    Log.Fatal(
+        e.Exception,
+        "UNOBSERVED TASK EXCEPTION");
+
+    e.SetObserved();
+};
+
+try
+{
+    Log.Information("Starting Elevator Simulation System...");
 
 var building = new Building(
     floorCount: 4,
     elevatorCount: 4,
     elevatorCapacity: 5,
     tickDurationMs: 500,
-    basementFloors: 1);
-building.Elevators[1].DoorState = ElevatorDoorState.Open;
-building.Elevators[3].AddStop(3, Direction.Up);
-
+    basementFloors: 2);
 
 var eventBus  = new InMemoryEventBus();
 var clock     = new SimulationClock(TimeSpan.FromMilliseconds(building.TickDurationMs));
-var engine    = new SimulationEngine(clock, eventBus);
 var strategy  = new NearestElevatorStrategy();
 var dispatcher = new Dispatcher(strategy, eventBus);
+var engine    = new SimulationEngine(building, clock, eventBus, dispatcher);
 
 
-_ = Task.Run(() => engine.Play());
-
-var host = Host.CreateDefaultBuilder(args)
-    .UseRazorConsole<BuildingComponent>()
-    .ConfigureServices(services =>
+_ = Task.Run(() =>
+{
+    try
     {
-        // Register domain singletons for Razor @inject
-        services.AddSingleton(building);
-        services.AddSingleton<ISimulationEngine>(engine);
-        services.AddSingleton<ISimulationClock>(clock);
-        services.AddSingleton<IEventBus>(eventBus);
-        services.AddSingleton<Dispatcher>(dispatcher);
-    })
-    .Build();
+        engine.Play();
+    }
+    catch (Exception ex)
+    {
+        Log.Fatal(ex, "Simulation Engine Crashed");
+        throw;
+    }
+});
 
-// Clear the console on startup
-Spectre.Console.AnsiConsole.Clear();
+var restartCount = 0;
+while (true)
+{
+    try
+    {
+        Log.Information("Starting UI Host...");
 
-try
-{
-    await host.RunAsync();
-}
-finally
-{
-    // Clear the console again on shutdown/stop
-    Spectre.Console.AnsiConsole.Clear();
+        var host = Host.CreateDefaultBuilder(args)
+            .UseSerilog((context, services, configuration) =>
+            {
+                configuration
+                    .MinimumLevel.Debug()
+                    .WriteTo.File(
+                        "logs/elevator-simulation-.log",
+                        rollingInterval: RollingInterval.Day);
+            })
+            .UseRazorConsole<BuildingComponent>()
+            .ConfigureServices(services =>
+            {
+                services.AddSingleton(building);
+                services.AddSingleton<ISimulationEngine>(engine);
+                services.AddSingleton<ISimulationClock>(clock);
+                services.AddSingleton<IEventBus>(eventBus);
+                services.AddSingleton<Dispatcher>(dispatcher);
+            })
+            .Build();
+
+        await host.RunAsync();
+        restartCount = 0;
+
+        Log.Warning("UI Host exited normally.");
+    }
+    catch (Exception ex)
+    {
+        restartCount++;
+
+        Log.Error(ex,
+            "UI crashed. Restart attempt {RestartCount}",
+            restartCount);
+
+        if (restartCount > 10)
+        {
+            Log.Fatal(
+                "UI exceeded maximum restart attempts.");
+            break;
+        }
+
+        await Task.Delay(
+            TimeSpan.FromSeconds(
+                Math.Min(restartCount * 2, 30)));
+    }
+}}
+catch (Exception ex) {
+    Log.Error(ex, "UI crashed");
 }
