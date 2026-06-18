@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using RazorConsole.Core;
 using Serilog;
+using ElevatorSimulator.ConsoleUI.Setup;
 
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Debug()
@@ -35,12 +36,14 @@ try
 {
     Log.Information("Starting Elevator Simulation System...");
 
+var config = ConfigurationPrompt.GetConfiguration();
+
 var building = new Building(
-    floorCount: 4,
-    elevatorCount: 4,
-    elevatorCapacity: 5,
-    tickDurationMs: 500,
-    basementFloors: 2);
+    floorCount: config.FloorCount,
+    elevatorCount: config.ElevatorCount,
+    elevatorCapacity: config.ElevatorCapacity,
+    tickDurationMs: config.TickDurationMs,
+    basementFloors: config.BasementFloors);
 
 var eventBus  = new InMemoryEventBus();
 var clock     = new SimulationClock(TimeSpan.FromMilliseconds(building.TickDurationMs));
@@ -63,7 +66,19 @@ _ = Task.Run(() =>
 });
 
 var restartCount = 0;
-while (true)
+
+var shuttingDown = false;
+
+Console.CancelKeyPress += (_, e) =>
+{
+    Log.Information("Shutdown requested (Ctrl+C)");
+
+    shuttingDown = true;
+
+    e.Cancel = false;
+};
+
+while (!shuttingDown)
 {
     try
     {
