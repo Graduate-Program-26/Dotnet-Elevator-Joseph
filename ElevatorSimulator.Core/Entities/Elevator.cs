@@ -7,7 +7,8 @@ public class Elevator
     public Guid Id { get; init; } = Guid.NewGuid();
     public string Name { get; init; }
     public int CurrentFloor { get; set; } = 0;
-    public double Position { get; set; } = 0.0;
+    public int TransitionTicks { get; set; } = 0;
+    public const int TicksPerFloor = 4;
     public Direction Direction { get; set; } = Direction.Idle;
     public ElevatorState State { get; set; } = ElevatorState.Idle;
     public ElevatorDoorState DoorState { get; set; } = ElevatorDoorState.Closed;

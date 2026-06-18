@@ -4,9 +4,9 @@ public enum DoorState
 {
 
     Closed,
-
     Opening,
-
     Open,
     Closing,
+    PartialyClosed,
+    PartialyOpened,
 }

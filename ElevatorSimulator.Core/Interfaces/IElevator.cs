@@ -7,7 +7,7 @@ public interface IElevator
     Guid Id { get; }
     string Name { get; }
     int CurrentFloor { get; }
-    double Position { get; }
+    int TransitionTicks { get; }
     Enums.Direction Direction { get; }
     Enums.ElevatorState State { get; }
     int Capacity { get; }
