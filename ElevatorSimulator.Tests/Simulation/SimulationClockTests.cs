@@ -46,12 +46,12 @@ public class SimulationClockTests
 
 
         clock.Start();
-        await Task.Delay(50); 
+        await Task.Delay(50);
         clock.Stop();
-        
+
         var ticksAfterStop = eventFiredCount;
         await Task.Delay(50); // time to ensure no more ticks have occured
-        
+
         Assert.True(ticksAfterStop > 0);
         Assert.Equal(ticksAfterStop, eventFiredCount);
     }

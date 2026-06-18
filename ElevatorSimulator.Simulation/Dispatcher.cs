@@ -29,7 +29,7 @@ public class Dispatcher
                 call.Status = HallCallStatus.Assigned;
                 call.AssignedElevatorId = elevator.Id;
                 elevator.AddStop(call.Floor, call.Direction);
-                
+
                 _eventBus.Publish(new HallCallAssignedEvent(call, elevator.Id));
             }
         }

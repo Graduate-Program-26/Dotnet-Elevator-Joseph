@@ -14,7 +14,7 @@ public class Building
         {
             Floors.Add(new Floor(i));
         }
-        for ( int i = 1; i <= basementFloors; i++)
+        for (int i = 1; i <= basementFloors; i++)
         {
             Floors.Add(new Floor(-i));
         }
@@ -24,7 +24,7 @@ public class Building
             Elevators.Add(new Elevator($"Elevator-{i}", elevatorCapacity));
         }
     }
-    public int GetFloorCount () => Floors.Count();
-    public int GetElevatorCount () => Elevators.Count();
+    public int GetFloorCount() => Floors.Count();
+    public int GetElevatorCount() => Elevators.Count();
     public IEnumerable<HallCall> GetActiveHallCalls() => Floors.SelectMany(f => f.GetActiveCalls());
 }

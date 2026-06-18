@@ -31,9 +31,9 @@ public static class BuildingViewModelMapper
 
     private static HallCallViewModel MapHallCall(Floor floor) =>
         new(
-            HasUpCall:   floor.UpCall   != null,
+            HasUpCall: floor.UpCall != null,
             HasDownCall: floor.DownCall != null,
-            UpPassengerCount:   floor.WaitingUpPassengers.Count,
+            UpPassengerCount: floor.WaitingUpPassengers.Count,
             DownPassengerCount: floor.WaitingDownPassengers.Count);
 
     private static ElevatorViewModel MapElevator(Elevator elevator, int fleetIndex)
@@ -45,31 +45,31 @@ public static class BuildingViewModelMapper
             : (fleetIndex + 1).ToString();
 
         return new ElevatorViewModel(
-            Id:              elevator.Id,
-            Label:           label,
-            CurrentFloor:    elevator.CurrentFloor,
+            Id: elevator.Id,
+            Label: label,
+            CurrentFloor: elevator.CurrentFloor,
             TransitionTicks: elevator.TransitionTicks,
-            Direction:       MapDirection(elevator.Direction),
+            Direction: MapDirection(elevator.Direction),
             Occupancy: elevator.Occupancy,
-            Capacity:  elevator.Capacity,
+            Capacity: elevator.Capacity,
             DoorState: MapDoorState(elevator.DoorState),
-            UpStops:   elevator.UpStops.OrderBy(s => s).ToList(),
+            UpStops: elevator.UpStops.OrderBy(s => s).ToList(),
             DownStops: elevator.DownStops.OrderByDescending(s => s).ToList());
     }
 
-       private static DirectionViewModel MapDirection(CoreDirection direction) => direction switch
+    private static DirectionViewModel MapDirection(CoreDirection direction) => direction switch
     {
-        CoreDirection.Up   => DirectionViewModel.Up,
+        CoreDirection.Up => DirectionViewModel.Up,
         CoreDirection.Down => DirectionViewModel.Down,
-        _                  => DirectionViewModel.Idle,
+        _ => DirectionViewModel.Idle,
     };
     private static DoorState MapDoorState(CoreDoorState state) => state switch
     {
         CoreDoorState.Opening => DoorState.Opening,
-        CoreDoorState.Open    => DoorState.Open,
+        CoreDoorState.Open => DoorState.Open,
         CoreDoorState.Closing => DoorState.Closing,
         CoreDoorState.PartialyClosed => DoorState.PartialyClosed,
         CoreDoorState.PartialyOpened => DoorState.PartialyOpened,
-        _                     => DoorState.Closed, 
+        _ => DoorState.Closed,
     };
 }

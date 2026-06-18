@@ -19,9 +19,9 @@ public class DispatcherTests
 
         var elevator = new Elevator("E1", 10) { State = ElevatorState.Idle, CurrentFloor = 0 };
         var hallCall = new HallCall(5, Direction.Up);
-        
+
         var eventReceived = false;
-        eventBus.Subscribe<HallCallAssignedEvent>(e => 
+        eventBus.Subscribe<HallCallAssignedEvent>(e =>
         {
             if (e.HallCall == hallCall && e.ElevatorId == elevator.Id)
                 eventReceived = true;

@@ -10,7 +10,7 @@ public class ElevatorTests
     public void Elevator_ShouldInitialize_WithCorrectDefaults()
     {
         var elevator = new Elevator("Test-Elevator", 10);
-        
+
         elevator.Name.Should().Be("Test-Elevator");
         elevator.Capacity.Should().Be(10);
         elevator.CurrentFloor.Should().Be(0);
