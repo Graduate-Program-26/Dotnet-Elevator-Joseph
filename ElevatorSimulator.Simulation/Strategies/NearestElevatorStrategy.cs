@@ -11,7 +11,7 @@ public class NearestElevatorStrategy : IDispatchStrategy
         var eligibleElevators = elevators.Where(e => IsEligible(e, hallCall));
 
         return eligibleElevators
-            .OrderBy(e => Math.Abs(e.Position - hallCall.Floor))
+            .OrderBy(e => Math.Abs(e.CurrentFloor - hallCall.Floor))
             .FirstOrDefault();
     }
 
@@ -26,10 +26,10 @@ public class NearestElevatorStrategy : IDispatchStrategy
         if (elevator.IsFull)
             return false;
 
-        if (elevator.Direction == Direction.Up && elevator.Position > hallCall.Floor)
+        if (elevator.Direction == Direction.Up && elevator.CurrentFloor > hallCall.Floor)
             return false;
 
-        if (elevator.Direction == Direction.Down && elevator.Position < hallCall.Floor)
+        if (elevator.Direction == Direction.Down && elevator.CurrentFloor < hallCall.Floor)
             return false;
 
         return true;
